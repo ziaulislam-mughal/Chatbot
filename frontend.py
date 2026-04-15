@@ -8,6 +8,11 @@ if 'message_history' not in st.session_state:
     st.session_state['message_history'] = []
 
 
+st.sidebar.title("Chatbot")
+st.sidebar.button("New Chat")
+st.sidebar.header("My Conversations")
+
+
 #load history
 for sms in st.session_state['message_history']:
     with st.chat_message(sms["role"]):
@@ -24,7 +29,7 @@ if userinput:
         ai_message = st.write_stream(
             message_chunk.content for message_chunk , metadata  in chatbot.stream(
                 #initial state 
-                {"messages": [HumanMessage(content="Hello, how are you?")]},
+                {"messages": [HumanMessage(content=userinput)]},
                 #config 
                 config = {'configurable' : {'thread_id' : "thread_1"}},
                 #mode
