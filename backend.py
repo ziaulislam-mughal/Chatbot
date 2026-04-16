@@ -3,7 +3,7 @@ from typing import TypedDict , Annotated
 import os 
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEndpoint , ChatHuggingFace
-from langchain_core.messages import BaseMessage  
+from langchain_core.messages import BaseMessage   , HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.graph.message import add_messages
 
@@ -51,7 +51,7 @@ def chat(state:ChatState):
     :param state: INSERT DESCRIPTION
     :type state: ChatState
 
-    
+    .
     """
     #user query 
     messages =  state['messages']
@@ -85,3 +85,6 @@ graph.add_edge("chat",END)
                             # Compile Graph
 # ====================================================================
 chatbot = graph.compile(checkpointer=checkpointer)
+
+
+
