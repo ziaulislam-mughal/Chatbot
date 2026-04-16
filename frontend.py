@@ -70,12 +70,8 @@ def generate_title(user_message):
     Message: {user_message}
     Title:
     """
-    # Use a dummy thread_id so this prompt doesn't save into the main chat history
     dummy_config = {"configurable": {"thread_id": "title_gen_" + str(uuid.uuid4())}}
-    
     response = chatbot.invoke({"messages": [HumanMessage(content=prompt)]}, config=dummy_config)
-    
-    # Bug fixed: Removed .values to access dictionary directly
     return response['messages'][-1].content.strip('" \n') 
 
 # ______________________________________________________________________
@@ -100,18 +96,17 @@ add_thread(st.session_state['thread_id'])
 #                             SideBar
 # ______________________________________________________________________
 
-st.sidebar.title("Chatbot")
+st.sidebar.title("Chat Guru")
 
 if st.sidebar.button("New Chat"):
     reset_chat()
     st.rerun()
 
-st.sidebar.header("My Conversations : ")
+st.sidebar.text("Recent Chats")
 
 for thread_id in st.session_state['chat_thread'][::-1]:
     chat_title = st.session_state["chat_titles"].get(thread_id, "New Chat")
     
-    # key=str(thread_id) is mandatory to prevent duplicate keys error
     if st.sidebar.button(chat_title, key=str(thread_id)):
         st.session_state['thread_id'] = thread_id
         messages = load_conversation(thread_id)
@@ -127,10 +122,55 @@ for thread_id in st.session_state['chat_thread'][::-1]:
         st.session_state['message_history'] = temp
         st.rerun()
 
-# Load history on screen
-for meg in st.session_state['message_history']:
-    with st.chat_message(meg["role"]):
-        st.text(meg["content"])
+# ____________________________________________________________________
+#                   Load history on screen / Welcome Animation
+# ____________________________________________________________________
+
+# Agar chat history khali hai, toh animation show karein
+if not st.session_state['message_history']:
+    st.markdown(
+        """
+        <style>
+        .welcome-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 60vh; /* Screen ke center mein lane ke liye */
+        }
+        .typewriter {
+            font-family: 'Courier New', Courier, monospace;
+            color: #ffffff; /* Text color */
+            font-size: 2.5em;
+            font-weight: bold;
+            overflow: hidden; 
+            border-right: .15em solid #7b7b7b; /* Cursor color */
+            white-space: nowrap; 
+            margin: 0 auto;
+            letter-spacing: .10em;
+            animation: 
+                typing 2.5s steps(22, end),
+                blink-caret .75s step-end infinite;
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 22ch; } /* Number of characters ke hisaab se width */
+        }
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: #7b7b7b; }
+        }
+        </style>
+        <div class="welcome-container">
+            <div class="typewriter">Ready to Chat with Guru </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+else:
+    # Agar message history mojood hai toh puray messages show karein
+    for meg in st.session_state['message_history']:
+        with st.chat_message(meg["role"]):
+            st.text(meg["content"])
 
 userinput = st.chat_input("Type your message here...")
 
@@ -168,3 +208,6 @@ if userinput:
         )
         
         st.session_state['message_history'].append({"role": "assistant", "content": ai_message})
+    
+    # Ek dafa jab AI ka message aa jaye, toh UI update karne ke liye rerun (taki animation remove ho jaye agar issue aaye)
+    st.rerun()
