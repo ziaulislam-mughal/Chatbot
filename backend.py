@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from langchain_huggingface import HuggingFaceEndpoint , ChatHuggingFace
 from langchain_core.messages import BaseMessage   , HumanMessage
-from langgraph.checkpoint.memory import InMemorySaver
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph.message import add_messages
 
 
@@ -64,7 +64,7 @@ def chat(state:ChatState):
                             # Checkpointer
 # ====================================================================
 #checkpointer 
-checkpointer = InMemorySaver()
+checkpointer = SqliteSaver()
 # ====================================================================
                             # define Graph
 # ====================================================================
@@ -88,3 +88,14 @@ chatbot = graph.compile(checkpointer=checkpointer)
 
 
 
+def generate_chat_title(user_message):
+
+    prompt = f"""
+    Generate a short conversation title in 2-3 words only.
+    Message: {user_message}
+    Title:
+    """
+
+    response = llm.invoke([HumanMessage(content=prompt)])
+
+    return response.content.strip()
