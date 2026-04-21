@@ -114,3 +114,12 @@ def generate_chat_title(user_message):
     response = llm.invoke([HumanMessage(content=prompt)])
 
     return response.content.strip()
+
+
+CONFIG = {"configurable": {"thread_id": "test_thread"}}
+test = chatbot.invoke(
+                {"messages": [HumanMessage(content="Hello, what is computer vision?")]},
+                config = CONFIG,
+            )
+
+print(test)
