@@ -6,6 +6,7 @@ from langchain_huggingface import HuggingFaceEndpoint , ChatHuggingFace
 from langchain_core.messages import BaseMessage   , HumanMessage
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph.message import add_messages
+import sqlite3
 
 
 # ====================================================================
@@ -61,10 +62,14 @@ def chat(state:ChatState):
     return {"messages": [response]}
 
 # ====================================================================
+                            # connection
+# ====================================================================
+conn = sqlite3.connect("chatbot.db", check_same_thread=False)
+# ====================================================================
                             # Checkpointer
 # ====================================================================
 #checkpointer 
-checkpointer = SqliteSaver()
+checkpointer = SqliteSaver(conn = conn)
 # ====================================================================
                             # define Graph
 # ====================================================================
@@ -89,6 +94,16 @@ chatbot = graph.compile(checkpointer=checkpointer)
 
 
 def generate_chat_title(user_message):
+    """
+    Description:
+
+    Parameters
+    ----------
+    :param user_message: INSERT DESCRIPTION
+    :type user_message: type
+
+    .
+    """
 
     prompt = f"""
     Generate a short conversation title in 2-3 words only.
