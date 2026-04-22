@@ -1,14 +1,12 @@
-from langgraph.graph import StateGraph , START , END 
+from langgraph.graph import StateGraph , START , END
 from typing import TypedDict , Annotated
 import os 
-from dotenv import load_dotenv
+from dotenv import load_dotenv 
 from langchain_huggingface import HuggingFaceEndpoint , ChatHuggingFace
-from langchain_core.messages import BaseMessage   , HumanMessage
+from langchain_core.messages import BaseMessage , HumanMessage 
 from langgraph.checkpoint.sqlite import SqliteSaver
-from langgraph.graph.message import add_messages
+from langgraph.graph.message import add_messages 
 import sqlite3
-
-
 # ====================================================================
                             # load modules
 # ====================================================================
@@ -34,92 +32,46 @@ llm_H = HuggingFaceEndpoint(
 
 #  Wrap it in ChatHuggingFace (This handles the "conversational" format for you)
 llm = ChatHuggingFace(llm=llm_H)
+
 # ====================================================================
                             # Define Schema
 # ====================================================================
+
 class ChatState(TypedDict):
-    messages : Annotated[list[BaseMessage] , add_messages]
-# ====================================================================
-                            # Function
-# ====================================================================
-#function 
+    messages : Annotated[list[BaseMessage],add_messages]
+
 def chat(state:ChatState):
-    """
-    Description:
-
-    Parameters
-    ----------
-    :param state: INSERT DESCRIPTION
-    :type state: ChatState
-
-    .
-    """
     #user query 
-    messages =  state['messages']
+    messages = state['messages']
     #llm 
-    response = llm.invoke(messages)
+    response = llm.invoke({"messages": messages})
     #response
-    return {"messages": [response]}
+    return {"messages":[response]}
+    
+# Connection with SQLite for checkpointing
+conn = sqlite3.connnect(database="chatbot_history.db",check_same_thread=False)
 
-# ====================================================================
-                            # connection
-# ====================================================================
-conn = sqlite3.connect("chatbot.db", check_same_thread=False)
-# ====================================================================
-                            # Checkpointer
-# ====================================================================
 #checkpointer 
-checkpointer = SqliteSaver(conn = conn)
-# ====================================================================
-                            # define Graph
-# ====================================================================
-#Graph define 
-graph  = StateGraph(ChatState)
-# ====================================================================
-                            # define Nodes
-# ====================================================================
-# nodes 
-graph.add_node("chat",chat)
-# ====================================================================
-                            # define Edges
-# ====================================================================
-#edge
-graph.add_edge(START,"chat")
-graph.add_edge("chat",END)
-# ====================================================================
-                            # Compile Graph
-# ====================================================================
-chatbot = graph.compile(checkpointer=checkpointer)
+checkpointer = SqliteSaver(conn=conn)
 
 
-
-def generate_chat_title(user_message):
-    """
-    Description:
-
-    Parameters
-    ----------
-    :param user_message: INSERT DESCRIPTION
-    :type user_message: type
-
-    .
-    """
-
-    prompt = f"""
-    Generate a short conversation title in 2-3 words only.
-    Message: {user_message}
-    Title:
-    """
-
-    response = llm.invoke([HumanMessage(content=prompt)])
-
-    return response.content.strip()
+# Graph 
+graph = StateGraph(ChatState)
 
 
-CONFIG = {"configurable": {"thread_id": "test_thread"}}
-test = chatbot.invoke(
-                {"messages": [HumanMessage(content="Hello, what is computer vision?")]},
-                config = CONFIG,
-            )
+# Nodes 
+graph.add_node("chat" ,chat )
+# Edges
+graph.add_edge(START , "chat")
+graph.add_edge("chat" , END)
 
-print(test)
+
+# Compile 
+chatbot = graph.compile()
+
+def retrieve_all_threads():
+    add_threads = set()
+    for cp in checkpointer.list(None):
+        add_threads.add(cp.config['config']['thread_id'])
+
+    return list(add_threads)
