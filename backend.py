@@ -115,3 +115,15 @@ def generate_chat_title(user_message):
 
     return response.content.strip()
 
+
+def retrieve_all_threads():
+    all_threads = set()
+    for cp in checkpointer.list(None):
+        all_threads.add(cp.config["configurable"]["thread_id"]) 
+    return list(all_threads)
+
+# test retrieve all threads 
+if __name__ == "__main__":
+    threads = retrieve_all_threads()
+    print("All Threads:", threads)
+    
